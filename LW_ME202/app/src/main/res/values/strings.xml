@@ -19,6 +19,7 @@
     <string name="lightStateAuto_text">Auto</string>
     <string name="lightStateOn_text">ON</string>
     <string name="historyButton_text">Riding History</string>
+
     <string name="unlockDialogTitle_text">Unlock Bike</string>
     <string name="unlockDialogLabel_text">Bike ID: </string>
     <string name="unlockDialogDefault_text">Enter Bike ID Here</string>
@@ -26,5 +27,9 @@
     <string name="unlockCancel_text">Cancel</string>
     <string name="unlockGoodToast_text">Unlocked Bike: </string>
     <string name="unlockBadToast_text">Please Enter a Valid bike ID</string>
+
+    <string name="rideHistoryEntry_text">Enter new ride location</string>
+    <string name="rideHistoryUpdate_text">Add Ride</string>
+    <string name="itemDeletedToast_text">Ride Deleted from History</string>
 
 </resources>

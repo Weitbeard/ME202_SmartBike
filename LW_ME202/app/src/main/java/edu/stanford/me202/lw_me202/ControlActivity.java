@@ -35,7 +35,7 @@ public class ControlActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
          //link the proper layout
         setContentView(R.layout.activity_control);
-         //pull in views
+         //bind views
         unlockButton = (Button) findViewById(R.id.unlockButton);
         connStatusText = (TextView) findViewById(R.id.connStatusText);
         bikeIDText = (TextView) findViewById(R.id.bikeIDText);

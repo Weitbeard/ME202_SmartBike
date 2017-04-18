@@ -3,18 +3,47 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:paddingTop="8dp"
     android:paddingBottom="8dp"
     android:paddingLeft="16dp"
     android:paddingRight="16dp"
     tools:context="edu.stanford.me202.lw_me202.RideHistoryActivity">
 
+    <ImageView
+        android:id="@+id/rideHistoryBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/rideHistoryRcyc_view"
+        android:id="@+id/rideHistoryRcyc"
+        android:focusable="true"
         android:scrollbars="vertical"
         android:layout_width="match_parent"
-        android:layout_height="fill_parent"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal">
+
+        <EditText
+            android:id="@+id/rideHistoryEntry"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:hint="@string/rideHistoryEntry_text"/>
+
+        <Button
+            android:id="@+id/rideHistoryUpdateButton"
+            android:layout_width="0dp"
+            android:layout_weight="0.5"
+            android:layout_height="wrap_content"
+            android:hint="@string/rideHistoryUpdate_text"/>
+
+    </LinearLayout>
 
 </LinearLayout>
