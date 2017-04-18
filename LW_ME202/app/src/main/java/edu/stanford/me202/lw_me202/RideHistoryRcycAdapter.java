@@ -6,7 +6,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import java.util.ArrayList;
+
+import io.realm.Realm;
+import io.realm.RealmResults;
 
 /**
  * Created by Luke on 4/15/2017.
@@ -14,10 +16,8 @@ import java.util.ArrayList;
 
 public class RideHistoryRcycAdapter extends RecyclerView.Adapter<RideHistoryRcycAdapter.ViewHolder> {
 
-    private ArrayList<RideHistoryItem> dataset;
-
     // Provide a suitable constructor (depends on the kind of dataset)
-    public RideHistoryRcycAdapter(ArrayList<RideHistoryItem> rideData) { this.dataset = rideData; }
+    public RideHistoryRcycAdapter() {}
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -48,15 +48,26 @@ public class RideHistoryRcycAdapter extends RecyclerView.Adapter<RideHistoryRcyc
     public void onBindViewHolder(ViewHolder holder, int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
+        RideHistoryItem rh;
+
+        try(Realm realm = Realm.getDefaultInstance()){
+            RealmResults<RideHistoryItem> rr = realm.where(RideHistoryItem.class).findAll();
+            rh = rr.get(position);
+        }
+
         //holder.rideIcon....; todo
-        holder.rideLocationText.setText(dataset.get(position).getRideLocation());
-        holder.rideDateText.setText(dataset.get(position).getRideDate());
+        holder.rideLocationText.setText(rh.getRideLocation());
+        holder.rideDateText.setText(rh.getRideDate());
     }
 
     // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {
-        return dataset.size();
+        RealmResults<RideHistoryItem> rr;
+        try(Realm realm = Realm.getDefaultInstance()){
+            rr = realm.where(RideHistoryItem.class).findAll();
+        }
+        return rr.size();
     }
 
 }
