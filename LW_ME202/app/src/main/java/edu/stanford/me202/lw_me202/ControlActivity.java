@@ -2,6 +2,7 @@ package edu.stanford.me202.lw_me202;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -137,11 +138,13 @@ public class ControlActivity extends AppCompatActivity {
             }
         });
 
-         //user clickes the "Ride History" button =>
+         //user clicks the "Ride History" button =>
         historyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //Todo
+                //change to ride history activity
+                Intent rideHistIntent = new Intent(getApplicationContext(), RideHistoryActivity.class);
+                startActivity(rideHistIntent);
             }
         });
     }
