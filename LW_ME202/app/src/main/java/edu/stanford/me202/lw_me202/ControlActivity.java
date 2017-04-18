@@ -16,34 +16,31 @@ import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 import static edu.stanford.me202.lw_me202.R.id.unlockDialogEntry;
 
 public class ControlActivity extends AppCompatActivity {
 
     private static final String TAG = "ControlActivity";
 
-    private Button unlockButton;
-    private TextView connStatusText;
-    private TextView bikeIDText;
-    private Switch lightModeSwitch;
-    private Switch lightStateSwitch;
-    private TextView lightModeText;
-    private TextView lightStateText;
-    private Button historyButton;
+     //linking views
+    @BindView(R.id.unlockButton) Button unlockButton;
+    @BindView(R.id.connStatusText) TextView connStatusText;
+    @BindView(R.id.bikeIDText) TextView bikeIDText;
+    @BindView(R.id.lightModeSwitch) Switch lightModeSwitch;
+    @BindView(R.id.lightStateSwitch) Switch lightStateSwitch;
+    @BindView(R.id.lightModeText) TextView lightModeText;
+    @BindView(R.id.lightStateText) TextView lightStateText;
+    @BindView(R.id.historyButton) Button historyButton;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
          //link the proper layout
         setContentView(R.layout.activity_control);
          //bind views
-        unlockButton = (Button) findViewById(R.id.unlockButton);
-        connStatusText = (TextView) findViewById(R.id.connStatusText);
-        bikeIDText = (TextView) findViewById(R.id.bikeIDText);
-        lightModeSwitch = (Switch) findViewById(R.id.lightModeSwitch);
-        lightStateSwitch = (Switch) findViewById(R.id.lightStateSwitch);
-        lightModeText = (TextView) findViewById(R.id.lightModeText);
-        lightStateText = (TextView) findViewById(R.id.lightStateText);
-        historyButton = (Button) findViewById(R.id.historyButton);
+        ButterKnife.bind(this);
     }
 
     @Override

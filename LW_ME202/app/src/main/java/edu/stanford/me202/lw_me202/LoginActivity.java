@@ -11,25 +11,29 @@ import android.widget.Toast;
 
 import java.util.Objects;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "LoginActivity";
 
-    private EditText nameEntry;
-    private EditText pwEntry;
-    private Button loginButton;
-    private static String CORRECT_NAME = "lukeweit";
-    private static String CORRECT_PW = "123abc";
+     //linking views
+    @BindView(R.id.loginNameEntry) EditText nameEntry;
+    @BindView(R.id.loginPWEntry) EditText pwEntry;
+    @BindView(R.id.loginButton) Button loginButton;
+
+     //constants for dummy authentication
+    private final static String CORRECT_NAME = "lukeweit";
+    private final static String CORRECT_PW = "123abc";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-         //set the correct layout
+         //set the proper layout
         setContentView(R.layout.activity_login);
-         //pull in the views
-        nameEntry = (EditText) findViewById(R.id.loginNameEntry);
-        pwEntry = (EditText) findViewById(R.id.loginPWEntry);
-        loginButton = (Button) findViewById(R.id.loginButton);
+         //bind views
+        ButterKnife.bind(this);
     }
 
     @Override

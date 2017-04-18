@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.realm.Realm;
 import io.realm.RealmResults;
 
@@ -23,14 +25,15 @@ public class RideHistoryRcycAdapter extends RecyclerView.Adapter<RideHistoryRcyc
     // Complex data items may need more than one view per item, and
     // you provide access to all the views for a data item in a view holder
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        public ImageView rideIcon;
-        public TextView rideLocationText;
-        public TextView rideDateText;
+        @BindView(R.id.rideItemIcon_image) ImageView rideIcon;
+        @BindView(R.id.rideItemLocation_text) TextView rideLocationText;
+        @BindView(R.id.rideItemDate_text) TextView rideDateText;
+
         public ViewHolder(View v) {
             super(v);
-            rideIcon = (ImageView) v.findViewById(R.id.rideItemIcon_image);
-            rideLocationText = (TextView) v.findViewById(R.id.rideItemLocation_text);
-            rideDateText = (TextView) v.findViewById(R.id.rideItemDate_text);
+
+             //bind views
+            ButterKnife.bind(this, v);
         }
     }
 
@@ -55,7 +58,7 @@ public class RideHistoryRcycAdapter extends RecyclerView.Adapter<RideHistoryRcyc
             rh = rr.get(position);
         }
 
-        //holder.rideIcon....; todo
+        //holder.rideIcon....; TODO: add icons to each row
         holder.rideLocationText.setText(rh.getRideLocation());
         holder.rideDateText.setText(rh.getRideDate());
     }

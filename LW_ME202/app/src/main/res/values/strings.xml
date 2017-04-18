@@ -28,6 +28,7 @@
     <string name="unlockGoodToast_text">Unlocked Bike: </string>
     <string name="unlockBadToast_text">Please Enter a Valid bike ID</string>
 
+    <string name="rideHistoryBanner_text">User Icon</string>
     <string name="rideHistoryEntry_text">Enter new ride label</string>
     <string name="rideHistoryUpdate_text">Add Ride</string>
     <string name="badItemEntryToast_text">Enter a unique ride label</string>

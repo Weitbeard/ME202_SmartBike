@@ -14,9 +14,10 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.realm.Realm;
 import io.realm.RealmResults;
 
@@ -24,33 +25,25 @@ public class RideHistoryActivity extends AppCompatActivity {
 
     private static final String TAG = "RideHistoryActivity";
 
-    private RecyclerView rideHistoryRcycView;
-    private RecyclerView.Adapter rideHistoryAdapter;
-    private RecyclerView.LayoutManager rideHistoryLayoutManager;
-    //private ArrayList<RideHistoryItem> rideData = new ArrayList<>();
-
-    private ImageView rideHistoryBanner;
-    private EditText rideHistoryEntry;
-    private Button rideHistoryUpdateButton;
+    @BindView(R.id.rideHistoryRcyc) RecyclerView rideHistoryRcyc;
+    @BindView(R.id.rideHistoryBanner) ImageView rideHistoryBanner;
+    @BindView(R.id.rideHistoryEntry) EditText rideHistoryEntry;
+    @BindView(R.id.rideHistoryUpdateButton) Button rideHistoryUpdateButton;
 
     Realm realm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        //link the proper layout
         setContentView(R.layout.activity_ride_history);
-        rideHistoryRcycView = (RecyclerView) findViewById(R.id.rideHistoryRcyc);
-        //rideHistoryRcycView.setHasFixedSize(true);
-        rideHistoryLayoutManager = new LinearLayoutManager(this);
-        rideHistoryRcycView.setLayoutManager(rideHistoryLayoutManager);
-        rideHistoryAdapter = new RideHistoryRcycAdapter();
-        rideHistoryRcycView.setAdapter(rideHistoryAdapter);
-
-         //bind other views
-        rideHistoryBanner = (ImageView) findViewById(R.id.rideHistoryBanner);
-        rideHistoryEntry = (EditText) findViewById(R.id.rideHistoryEntry);
-        rideHistoryUpdateButton = (Button) findViewById(R.id.rideHistoryUpdateButton);
+         //bind views
+        ButterKnife.bind(this);
+         //initialize recycler view utilities
+        RecyclerView.LayoutManager rideHistoryLayoutManager = new LinearLayoutManager(this);
+        rideHistoryRcyc.setLayoutManager(rideHistoryLayoutManager);
+        RecyclerView.Adapter rideHistoryAdapter = new RideHistoryRcycAdapter();
+        rideHistoryRcyc.setAdapter(rideHistoryAdapter);
 
          //setup swipe-to-delete
         ItemTouchHelper.SimpleCallback itemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
@@ -61,25 +54,7 @@ public class RideHistoryActivity extends AppCompatActivity {
 
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
-
                 // TODO: add a soft-delete function & confirmation dialog (or snackbar?)
-                /* //open up a dialog to confirm removal
-                AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(RideHistoryActivity.this);
-                dialogBuilder.setTitle("Removal Confirmation")
-                        .setMessage("Are you sure you want to delete this ride?")
-                        .setPositiveButton("CONFIRM", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        })
-                        .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        })
-                        .create().show();
-                 */
-
                  //remove the swiped ride from the list
                 removeFromRideHistory(viewHolder.getAdapterPosition());
                  //show toast
@@ -88,7 +63,7 @@ public class RideHistoryActivity extends AppCompatActivity {
             }
         };
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(itemTouchCallback);
-        itemTouchHelper.attachToRecyclerView(rideHistoryRcycView);
+        itemTouchHelper.attachToRecyclerView(rideHistoryRcyc);
 
          //initialize realm for the activity
         realm = Realm.getDefaultInstance();
@@ -109,7 +84,7 @@ public class RideHistoryActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String newRide = rideHistoryEntry.getText().toString();
                 if(!newRide.equals("")){
-                     //minimize keyboard (...needs review...)
+                     //minimize keyboard TODO: check for safer alternatives to this method
                     InputMethodManager inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
                      //get the current date
@@ -152,7 +127,7 @@ public class RideHistoryActivity extends AppCompatActivity {
         }
         realm.commitTransaction();
          //add it to the list
-        rideHistoryRcycView.getAdapter().notifyDataSetChanged();
+        rideHistoryRcyc.getAdapter().notifyDataSetChanged();
     }
 
     private void removeFromRideHistory(int position){
@@ -162,7 +137,7 @@ public class RideHistoryActivity extends AppCompatActivity {
         rides.get(position).deleteFromRealm();
         realm.commitTransaction();
          //remove object from the list
-        rideHistoryRcycView.getAdapter().notifyDataSetChanged();
+        rideHistoryRcyc.getAdapter().notifyDataSetChanged();
     }
 
     private void initTestData(){
