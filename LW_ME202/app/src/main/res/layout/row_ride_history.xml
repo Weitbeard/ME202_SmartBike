@@ -6,9 +6,10 @@
 
     <ImageView
         android:id="@+id/rideItemIcon_image"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="0.5"
         android:layout_height="wrap_content"
-        android:contentDescription=""  /> <!--todo-->
+        android:contentDescription="@string/rideRowIcon_text"  />
 
     <TextView
         android:id="@+id/rideItemLocation_text"

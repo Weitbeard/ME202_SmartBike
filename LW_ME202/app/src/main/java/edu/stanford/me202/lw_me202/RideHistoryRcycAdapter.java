@@ -1,16 +1,26 @@
 package edu.stanford.me202.lw_me202;
 
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
+import java.io.File;
+import java.util.ArrayList;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.realm.Realm;
 import io.realm.RealmResults;
+import io.realm.internal.Context;
 
 /**
  * Created by Luke on 4/15/2017.
@@ -18,8 +28,26 @@ import io.realm.RealmResults;
 
 public class RideHistoryRcycAdapter extends RecyclerView.Adapter<RideHistoryRcycAdapter.ViewHolder> {
 
+    private android.content.Context ctx;
+    private int[] icons;
+
     // Provide a suitable constructor (depends on the kind of dataset)
-    public RideHistoryRcycAdapter() {}
+    public RideHistoryRcycAdapter(android.content.Context ctx) {
+         //store context
+        this.ctx = ctx;
+
+         //store icons
+        // TODO: check for non-deprecated method
+        icons = new int[]{
+                R.drawable.ic_map_black_18dp,
+                R.drawable.ic_local_florist_black_18dp,
+                R.drawable.ic_location_city_black_18dp,
+                R.drawable.ic_whatshot_black_18dp,
+                R.drawable.ic_terrain_black_18dp,
+                R.drawable.ic_business_black_18dp,
+                R.drawable.ic_sentiment_very_satisfied_black_18dp
+        };
+    }
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -58,7 +86,11 @@ public class RideHistoryRcycAdapter extends RecyclerView.Adapter<RideHistoryRcyc
             rh = rr.get(position);
         }
 
-        //holder.rideIcon....; TODO: add icons to each row
+        //pull in icon
+        int iconType = rh.getRideIconType()%icons.length;
+        Picasso.with(ctx)
+                .load(icons[iconType])
+                .into(holder.rideIcon);
         holder.rideLocationText.setText(rh.getRideLocation());
         holder.rideDateText.setText(rh.getRideDate());
     }

@@ -23,5 +23,10 @@ public class SmartBikeApplication extends Application {
                 .deleteRealmIfMigrationNeeded()
                 .build();
         Realm.setDefaultConfiguration(realmConfig);
+
+//        Realm realm = Realm.getDefaultInstance();
+//        realm.beginTransaction();
+//        realm.deleteAll();
+//        realm.commitTransaction();
     }
 }

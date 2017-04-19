@@ -14,7 +14,9 @@
     <ImageView
         android:id="@+id/rideHistoryBanner"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="110dp"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
         android:contentDescription="@string/rideHistoryBanner_text"/>
 
     <android.support.v7.widget.RecyclerView
@@ -43,7 +45,7 @@
             android:layout_width="0dp"
             android:layout_weight="0.5"
             android:layout_height="wrap_content"
-            android:hint="@string/rideHistoryUpdate_text"/>
+            android:text="@string/rideHistoryUpdate_text"/>
 
     </LinearLayout>
 

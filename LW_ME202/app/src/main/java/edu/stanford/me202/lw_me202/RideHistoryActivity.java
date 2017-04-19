@@ -13,6 +13,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.squareup.picasso.Picasso;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -42,7 +44,7 @@ public class RideHistoryActivity extends AppCompatActivity {
          //initialize recycler view utilities
         RecyclerView.LayoutManager rideHistoryLayoutManager = new LinearLayoutManager(this);
         rideHistoryRcyc.setLayoutManager(rideHistoryLayoutManager);
-        RecyclerView.Adapter rideHistoryAdapter = new RideHistoryRcycAdapter();
+        RecyclerView.Adapter rideHistoryAdapter = new RideHistoryRcycAdapter(this);
         rideHistoryRcyc.setAdapter(rideHistoryAdapter);
 
          //setup swipe-to-delete
@@ -67,7 +69,13 @@ public class RideHistoryActivity extends AppCompatActivity {
 
          //initialize realm for the activity
         realm = Realm.getDefaultInstance();
-        initTestData();
+        //initTestData();
+
+         //pull in picture
+        Picasso.with(this)
+                .load("https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAALeAAAAJDU1NzMzM2JmLTgxZDMtNGEwYy1hODk1LTY5ZWNiMmEzZjY3MA.jpg")
+                .transform(new CircleConvert())
+                .into(rideHistoryBanner);
     }
 
     @Override
@@ -84,9 +92,9 @@ public class RideHistoryActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String newRide = rideHistoryEntry.getText().toString();
                 if(!newRide.equals("")){
-                     //minimize keyboard TODO: check for safer alternatives to this method
+                     //minimize keyboard
                     InputMethodManager inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+                    inputManager.hideSoftInputFromWindow(rideHistoryEntry.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
                      //get the current date
                     Calendar c = Calendar.getInstance();
                     SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -96,9 +104,6 @@ public class RideHistoryActivity extends AppCompatActivity {
                      //clear the text entry and remove focus
                     rideHistoryEntry.setText("");
                     rideHistoryEntry.clearFocus();
-                }
-                else{
-                     //do nothing
                 }
             }
         });
@@ -140,15 +145,15 @@ public class RideHistoryActivity extends AppCompatActivity {
         rideHistoryRcyc.getAdapter().notifyDataSetChanged();
     }
 
-    private void initTestData(){
-         //if there is nothing in realm
-        RealmResults<RideHistoryItem> rides = realm.where(RideHistoryItem.class).findAll();
-        if(rides.isEmpty()){
-             //add some dummy initial data
-            addToRideHistory("Tulsa, OK", "01/04/1991");
-            addToRideHistory("Omaha, NE", "05/21/2009");
-            addToRideHistory("Stanford, CA", "06/23/2017");
-        }
-    }
+//    private void initTestData(){
+//         //if there is nothing in realm
+//        RealmResults<RideHistoryItem> rides = realm.where(RideHistoryItem.class).findAll();
+//        if(rides.isEmpty()){
+//             //add some dummy initial data
+//            addToRideHistory("Tulsa, OK", "01/04/1991");
+//            addToRideHistory("Omaha, NE", "05/21/2009");
+//            addToRideHistory("Stanford, CA", "06/23/2017");
+//        }
+//    }
 
 }
