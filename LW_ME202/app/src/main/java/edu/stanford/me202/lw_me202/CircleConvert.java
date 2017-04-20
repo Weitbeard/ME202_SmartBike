@@ -11,6 +11,7 @@ import com.squareup.picasso.Transformation;
  * Created by Luke on 4/18/2017.
  */
 
+ //Custom Picasso transform for a centered circle crop
 public class CircleConvert implements Transformation {
     @Override
     public Bitmap transform(Bitmap source) {

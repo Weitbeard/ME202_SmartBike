@@ -36,8 +36,7 @@ public class RideHistoryRcycAdapter extends RecyclerView.Adapter<RideHistoryRcyc
          //store context
         this.ctx = ctx;
 
-         //store icons
-        // TODO: check for non-deprecated method
+         //store icon references
         icons = new int[]{
                 R.drawable.ic_map_black_18dp,
                 R.drawable.ic_local_florist_black_18dp,
@@ -49,9 +48,7 @@ public class RideHistoryRcycAdapter extends RecyclerView.Adapter<RideHistoryRcyc
         };
     }
 
-    // Provide a reference to the views for each data item
-    // Complex data items may need more than one view per item, and
-    // you provide access to all the views for a data item in a view holder
+     //view holder to store all views for displaying each row's data
     public static class ViewHolder extends RecyclerView.ViewHolder {
         @BindView(R.id.rideItemIcon_image) ImageView rideIcon;
         @BindView(R.id.rideItemLocation_text) TextView rideLocationText;
@@ -59,13 +56,12 @@ public class RideHistoryRcycAdapter extends RecyclerView.Adapter<RideHistoryRcyc
 
         public ViewHolder(View v) {
             super(v);
-
              //bind views
             ButterKnife.bind(this, v);
         }
     }
 
-    // Create new views (invoked by the layout manager)
+     //create new views when a row is added (invoked by the layout manager)
     @Override
     public RideHistoryRcycAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
@@ -74,20 +70,18 @@ public class RideHistoryRcycAdapter extends RecyclerView.Adapter<RideHistoryRcyc
         return vh;
     }
 
-    // Replace the contents of a view (invoked by the layout manager)
+     //replace the contents of a row's views with its item's data (invoked by the layout manager)
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        // - get element from your dataset at this position
-        // - replace the contents of the view with that element
+         //get the list item from realm
         RideHistoryItem rh;
-
         try(Realm realm = Realm.getDefaultInstance()){
             RealmResults<RideHistoryItem> rr = realm.where(RideHistoryItem.class).findAll();
             rh = rr.get(position);
         }
-
-        //pull in icon
+         //pull in icon
         int iconType = rh.getRideIconType()%icons.length;
+         //load data into views
         Picasso.with(ctx)
                 .load(icons[iconType])
                 .into(holder.rideIcon);
@@ -95,7 +89,7 @@ public class RideHistoryRcycAdapter extends RecyclerView.Adapter<RideHistoryRcyc
         holder.rideDateText.setText(rh.getRideDate());
     }
 
-    // Return the size of your dataset (invoked by the layout manager)
+     //return the size of the dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {
         RealmResults<RideHistoryItem> rr;

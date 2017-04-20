@@ -14,6 +14,7 @@ const int SCALE_FACTOR = 100;
 const int LIGHT_SENSE = 6;
 const int ACCEL_LED = 5;
 const int LIGHT_LED = 2;
+const int BLINK_TIME_DELAY = 10;
 
  //create object to hold accelerometer (for Sparkfun library)
 MMA8452Q myAccel;
@@ -44,6 +45,8 @@ void loop() {
   float newX,newY,newZ;
   float shakeVal;
   float shakeAve;
+  static int blinkCount = 0;
+  static bool lightLEDState = false;
   
    //if there is new data ready from the accelerometer
   if (myAccel.available()) {
@@ -77,11 +80,16 @@ void loop() {
 
    //if currently in a high-light setting
   if(digitalRead(LIGHT_SENSE) == HIGH){
-     //turn the light-level LED off
-    digitalWrite(LIGHT_LED,LOW);
+     //turn the light-level LED on
+    digitalWrite(LIGHT_LED,HIGH);
   }
   else{
-     //otherwise, turn the light-level LED on
-    digitalWrite(LIGHT_LED,HIGH);
+     //otherwise, keep blinking the light-level LED
+    blinkCount++;
+    if(blinkCount == BLINK_TIME_DELAY){
+      blinkCount = 0;
+      lightLEDState = !lightLEDState;
+    }
+    digitalWrite(LIGHT_LED,lightLEDState);
   }
 }

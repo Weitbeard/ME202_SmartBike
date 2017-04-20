@@ -73,7 +73,8 @@ public class RideHistoryActivity extends AppCompatActivity {
 
          //pull in picture
         Picasso.with(this)
-                .load("https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAALeAAAAJDU1NzMzM2JmLTgxZDMtNGEwYy1hODk1LTY5ZWNiMmEzZjY3MA.jpg")
+                 //grab the profile picture off linkedin
+                .load(getString(R.string.userPicture_URL))
                 .transform(new CircleConvert())
                 .into(rideHistoryBanner);
     }
@@ -90,13 +91,16 @@ public class RideHistoryActivity extends AppCompatActivity {
         rideHistoryUpdateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                 //get ride label for entry to be added
                 String newRide = rideHistoryEntry.getText().toString();
+                 //if the new ride item is not blank
                 if(!newRide.equals("")){
                      //minimize keyboard
                     InputMethodManager inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     inputManager.hideSoftInputFromWindow(rideHistoryEntry.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
                      //get the current date
                     Calendar c = Calendar.getInstance();
+                    // TODO: 4/19/2017 adjust to use a dynamic method incorporating time zone
                     SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
                     String formattedDate = dateFormat.format(c.getTime());
                      //add new item to the list
@@ -113,10 +117,12 @@ public class RideHistoryActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+         //close realm instance
         realm.close();
     }
 
     private void addToRideHistory(String rideLocation, String rideDate){
+         //open a new transaction with the realm db
         realm.beginTransaction();
          //check to confirm it doesn't already exist
         RealmResults<RideHistoryItem> rides = realm.where(RideHistoryItem.class).equalTo("rideLocation",rideLocation).findAll();
@@ -130,21 +136,25 @@ public class RideHistoryActivity extends AppCompatActivity {
             Toast toast = Toast.makeText(getApplicationContext(),R.string.badItemEntryToast_text, Toast.LENGTH_SHORT);
             toast.show();
         }
+         //close the transaction with the realm db
         realm.commitTransaction();
          //add it to the list
         rideHistoryRcyc.getAdapter().notifyDataSetChanged();
     }
 
     private void removeFromRideHistory(int position){
-         //remove it from realm
+         //open a new transaction with the realm db
         realm.beginTransaction();
+         //remove it from realm
         RealmResults<RideHistoryItem> rides = realm.where(RideHistoryItem.class).findAll();
         rides.get(position).deleteFromRealm();
+         //close the transaction with the realm db
         realm.commitTransaction();
          //remove object from the list
         rideHistoryRcyc.getAdapter().notifyDataSetChanged();
     }
 
+//     //For Testing Realm
 //    private void initTestData(){
 //         //if there is nothing in realm
 //        RealmResults<RideHistoryItem> rides = realm.where(RideHistoryItem.class).findAll();

@@ -28,6 +28,7 @@
     <string name="unlockGoodToast_text">Unlocked Bike: </string>
     <string name="unlockBadToast_text">Please Enter a Valid bike ID</string>
 
+    <string name="userPicture_URL">https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAALeAAAAJDU1NzMzM2JmLTgxZDMtNGEwYy1hODk1LTY5ZWNiMmEzZjY3MA.jpg</string>
     <string name="rideHistoryBanner_text">User icon</string>
     <string name="rideRowIcon_text">Ride trip icon</string>
     <string name="rideHistoryEntry_text">Enter new ride label</string>

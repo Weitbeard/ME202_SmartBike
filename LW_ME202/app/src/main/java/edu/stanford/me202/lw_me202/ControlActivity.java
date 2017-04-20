@@ -58,6 +58,7 @@ public class ControlActivity extends AppCompatActivity {
             public void onClick(View view) {
                  //create unlocking dialog
                 final Dialog dialog = new Dialog(ControlActivity.this);
+                ButterKnife.bind(this,dialog);
                 dialog.setTitle(R.string.unlockDialogTitle_text);
                 dialog.setCancelable(false);
                  //link the dialog layout

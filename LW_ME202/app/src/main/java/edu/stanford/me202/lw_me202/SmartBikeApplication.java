@@ -17,13 +17,16 @@ public class SmartBikeApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+         //initialize Realm db within the application
         Realm.init(this);
+         //configure the Realm db
         RealmConfiguration realmConfig = new RealmConfiguration.Builder()
                 .name(Realm.DEFAULT_REALM_NAME)
                 .deleteRealmIfMigrationNeeded()
                 .build();
         Realm.setDefaultConfiguration(realmConfig);
 
+//         //For Testing Realm (clear existing data to avoid lock-up)
 //        Realm realm = Realm.getDefaultInstance();
 //        realm.beginTransaction();
 //        realm.deleteAll();
