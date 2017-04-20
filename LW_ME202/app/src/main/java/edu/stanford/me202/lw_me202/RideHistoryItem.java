@@ -12,7 +12,7 @@ import io.realm.annotations.Required;
 
 public class RideHistoryItem extends RealmObject {
 
-    // TODO: 4/18/2017 replace the primary key with a unique hash-key, rather than using the ride location/label
+    // TODO: 4/18/2017 replace the primary key with a unique pseudo-random key, rather than using the ride location/label
     @PrimaryKey
     @Required
     private String rideLocation;
@@ -20,7 +20,7 @@ public class RideHistoryItem extends RealmObject {
     private String rideDate;
     private int rideIconType;
 
-     //need an empty constructor
+     //need an empty constructor for realm
     public RideHistoryItem() {}
 
     public RideHistoryItem(String rideLocation, String rideDate) {
