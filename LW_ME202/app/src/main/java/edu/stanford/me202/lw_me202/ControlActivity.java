@@ -1,9 +1,11 @@
 package edu.stanford.me202.lw_me202;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -35,6 +37,10 @@ public class ControlActivity extends AppCompatActivity {
     @BindView(R.id.lightStateText) TextView lightStateText;
     @BindView(R.id.historyButton) Button historyButton;
 
+    //final EditText unlockDialogEntry = (EditText) dialog.findViewById(R.id.unlockDialogEntry);
+    //final Button unlockEnterButton = (Button) dialog.findViewById(R.id.unlockEnterButton);
+    //final Button unlockCancelButton = (Button) dialog.findViewById(R.id.unlockCancelButton);
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
          //link the proper layout
@@ -56,51 +62,8 @@ public class ControlActivity extends AppCompatActivity {
         unlockButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                 //create unlocking dialog
-                final Dialog dialog = new Dialog(ControlActivity.this);
-                ButterKnife.bind(this,dialog);
-                dialog.setTitle(R.string.unlockDialogTitle_text);
-                dialog.setCancelable(false);
-                 //link the dialog layout
-                dialog.setContentView(R.layout.dialog_unlock);
-                 //pull in the views
-                final EditText unlockDialogEntry = (EditText) dialog.findViewById(R.id.unlockDialogEntry);
-                final Button unlockEnterButton = (Button) dialog.findViewById(R.id.unlockEnterButton);
-                final Button unlockCancelButton = (Button) dialog.findViewById(R.id.unlockCancelButton);
-
-                 //if user clicks "Enter" button in dialog =>
-                unlockEnterButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        String bikeID = unlockDialogEntry.getText().toString();
-                        String unlockToastText;
-                         //if a valid ID has been entered
-                        if(!bikeID.equals("")){
-                             //populate toast with selected ID number & dismiss dialog
-                            unlockToastText = getString(R.string.unlockGoodToast_text) + bikeID;
-                            dialog.dismiss();
-                        }
-                         //if an invalid ID
-                        else{
-                             //populate toast with warning
-                            unlockToastText = getString(R.string.unlockBadToast_text);
-                        }
-                         //show toast
-                        Toast toast = Toast.makeText(getApplicationContext(), unlockToastText, Toast.LENGTH_SHORT);
-                        toast.show();
-                    }
-                });
-
-                 //if user clicks the "Cancel" button in the dialog =>
-                unlockCancelButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                         //dismiss the dialog
-                        dialog.dismiss();
-                    }
-                });
-
-                 //show the dialog once it is created
+                 //create & show unlocking dialog
+                final Dialog dialog = new UnlockDialog(ControlActivity.this);
                 dialog.show();
             }
         });
@@ -145,5 +108,59 @@ public class ControlActivity extends AppCompatActivity {
                 startActivity(rideHistIntent);
             }
         });
+    }
+
+    public class UnlockDialog extends Dialog {
+         //unlock dialog views
+        @BindView(R.id.unlockDialogEntry) EditText unlockDialogEntry;
+        @BindView(R.id.unlockEnterButton) Button unlockEnterButton;
+        @BindView(R.id.unlockCancelButton) Button unlockCancelButton;
+
+        public UnlockDialog(@NonNull Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setTitle(R.string.unlockDialogTitle_text);
+            setCancelable(false);
+            //link the dialog layout
+            setContentView(R.layout.dialog_unlock);
+            //bind views
+            ButterKnife.bind(this);
+
+            //if user clicks "Enter" button in dialog =>
+            unlockEnterButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    String bikeID = unlockDialogEntry.getText().toString();
+                    String unlockToastText;
+                    //if a valid ID has been entered
+                    if(!bikeID.equals("")){
+                        //populate toast with selected ID number & dismiss dialog
+                        unlockToastText = getString(R.string.unlockGoodToast_text) + bikeID;
+                        dismiss();
+                    }
+                    //if an invalid ID
+                    else{
+                        //populate toast with warning
+                        unlockToastText = getString(R.string.unlockBadToast_text);
+                    }
+                    //show toast
+                    Toast toast = Toast.makeText(getApplicationContext(), unlockToastText, Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+            });
+
+            //if user clicks the "Cancel" button in the dialog =>
+            unlockCancelButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    //dismiss the dialog
+                    dismiss();
+                }
+            });
+        }
     }
 }
