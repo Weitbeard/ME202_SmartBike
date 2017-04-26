@@ -21,6 +21,7 @@
     <string name="lightStateOn_text">ON</string>
     <string name="historyButton_text">Riding History</string>
 
+    <string name="defaultBikeAddress">F2:D3:0A:CE:D1:38</string>
     <string name="unlockDialogTitle_text">Unlock Bike</string>
     <string name="unlockDialogLabel_text">Bike ID: </string>
     <string name="unlockDialogDefault_text">Enter Bike ID Here</string>

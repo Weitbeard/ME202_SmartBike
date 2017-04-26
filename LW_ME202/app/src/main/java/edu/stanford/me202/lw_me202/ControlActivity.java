@@ -196,6 +196,7 @@ public class ControlActivity extends AppCompatActivity {
             unlockEnterButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    unlockDialogEntry.setText(getString(R.string.defaultBikeAddress));
                     String bikeID = unlockDialogEntry.getText().toString();
                     String unlockToastText;
                     //if a valid ID has been entered
