@@ -1,13 +1,19 @@
 package edu.stanford.me202.lw_me202;
 
 import android.app.Dialog;
+import android.bluetooth.BluetoothManager;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -26,8 +32,9 @@ import static edu.stanford.me202.lw_me202.R.id.unlockDialogEntry;
 public class ControlActivity extends AppCompatActivity {
 
     private static final String TAG = "ControlActivity";
+    private BikeMonitorService mBMService;
 
-     //linking views
+    //linking views
     @BindView(R.id.unlockButton) Button unlockButton;
     @BindView(R.id.connStatusText) TextView connStatusText;
     @BindView(R.id.bikeIDText) TextView bikeIDText;
@@ -37,9 +44,51 @@ public class ControlActivity extends AppCompatActivity {
     @BindView(R.id.lightStateText) TextView lightStateText;
     @BindView(R.id.historyButton) Button historyButton;
 
-    //final EditText unlockDialogEntry = (EditText) dialog.findViewById(R.id.unlockDialogEntry);
-    //final Button unlockEnterButton = (Button) dialog.findViewById(R.id.unlockEnterButton);
-    //final Button unlockCancelButton = (Button) dialog.findViewById(R.id.unlockCancelButton);
+    private final ServiceConnection mBMConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            mBMService = ((BikeMonitorService.LocalBinder) service).getService();
+            if (!mBMService.initialize()) {
+                Log.e(TAG, "Unable to initialize BikeMonitor");
+                finish();
+            }
+            // Automatically connects to the device upon successful start-up initialization.
+            //mBMService.connect(bikeAddress);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            mBMService = null;
+        }
+    };
+
+    private final BroadcastReceiver mBMUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+             //get the intent
+            final String action = intent.getAction();
+             //based on the intent's contents:
+            if (BikeMonitorService.INTENT_TEST.equals(action)){
+                Log.e(TAG,"Service test intent received");
+            }
+//            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
+//                mConnected = true;
+//                updateConnectionState(R.string.connected);
+//                invalidateOptionsMenu();
+//            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+//                mConnected = false;
+//                updateConnectionState(R.string.disconnected);
+//                invalidateOptionsMenu();
+//                clearUI();
+//            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+//                // Show all the supported services and characteristics on the user interface.
+//                displayGattServices(mBluetoothLeService.getSupportedGattServices());
+//            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+//                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+//            }
+        }
+    };
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,6 +101,19 @@ public class ControlActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        //unregisterReceiver(mGattUpdateReceiver);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(mBMConnection);
+        mBMService = null;
     }
 
     @Override
@@ -104,11 +166,11 @@ public class ControlActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 //change to ride history activity
-                Intent rideHistIntent = new Intent(getApplicationContext(), RideHistoryActivity.class);
-                startActivity(rideHistIntent);
+                startActivity(new Intent(getApplicationContext(), RideHistoryActivity.class));
             }
         });
     }
+
 
     public class UnlockDialog extends Dialog {
          //unlock dialog views
@@ -138,6 +200,9 @@ public class ControlActivity extends AppCompatActivity {
                     String unlockToastText;
                     //if a valid ID has been entered
                     if(!bikeID.equals("")){
+                        //start BLE service to connect with monitor
+                        Intent bikeMonitorIntent = new Intent(getApplicationContext(), BikeMonitorService.class);
+                        bindService(bikeMonitorIntent, mBMConnection, BIND_AUTO_CREATE);
                         //populate toast with selected ID number & dismiss dialog
                         unlockToastText = getString(R.string.unlockGoodToast_text) + bikeID;
                         dismiss();

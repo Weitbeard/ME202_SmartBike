@@ -55,8 +55,7 @@ public class LoginActivity extends AppCompatActivity {
                  //if the username and password are correct
                 if(name.equals(CORRECT_NAME) && pw.equals(CORRECT_PW)){
                      //change to control activity
-                    Intent controlIntent = new Intent(getApplicationContext(), ControlActivity.class);
-                    startActivity(controlIntent);
+                    startActivity(new Intent(getApplicationContext(), ControlActivity.class));
                     finish();
                 }
                  //if they are incorrect

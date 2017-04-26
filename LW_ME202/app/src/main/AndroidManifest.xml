@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
 
     <application
         android:name=".SmartBikeApplication"
@@ -20,8 +21,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ControlActivity"/>
-        <activity android:name=".RideHistoryActivity"/>
+        <activity android:name=".ControlActivity" />
+        <activity android:name=".RideHistoryActivity" />
+
+        <service
+            android:name=".BikeMonitorService"
+            android:enabled="true"
+            android:exported="false"
+            android:description="@string/BMService_desc"/>
     </application>
 
 </manifest>
