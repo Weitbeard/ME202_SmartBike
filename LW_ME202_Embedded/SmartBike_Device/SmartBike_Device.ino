@@ -15,22 +15,29 @@
 #include <Adafruit_BLEGatt.h>
 #include <Adafruit_BluefruitLE_UART.h>
 #include <SoftwareSerial.h>
- //include user-defined BLE module configurations
-#include "BluefruitConfig.h"
+ //include hardware timer for LED blinking
+#include <TimerOne.h>
 
- //debug serial printout defines
+ //debug serial printout defines -> (using sw uart for ble means things may be missed if these are enabled)
 //#define LIGHT_DEBUG
 //#define ACCEL_DEBUG
+//#define BLUEFRUIT_DEBUG
 //#define STATE_DEBUG
 
  //device configurations
 #define DEVICE_ID 1          //unique device ID for this SmartBike
-#define BLINK_TIME_DELAY 10  //blink rate for status LED
 
  //embedded device pin connections
 #define LIGHT_SENSOR A3
-#define ACCEL_LED 5
-#define LIGHT_LED 2
+#define STATUS_LED 5
+#define MISC_LED 2
+
+ //LED configurations
+#define LED_OFF           0
+#define LED_SOLID         1
+#define LED_BLINK         2
+#define LED_FAST_BLINK    3
+#define BLINK_TIME_DELAY  500  //blink rate for status LED in ms
 
  //sensor reading array defines
 #define NUM_SENSORS 2              //number of sensor readings to track
@@ -43,8 +50,6 @@ int sensorReadings[NUM_SENSORS];
  //photoresistor configurations
 #define LIGHT_LEVEL_SAMPLES 3      //number of light level readings to store (rolling average)
 #define LIGHT_LEVEL_THRESHOLD 400  //threshold under which light level is "dark"
-#define DARK false
-#define BRIGHT true
  //array to hold readings for averaging
 int lightLevelSamples[LIGHT_LEVEL_SAMPLES];
 
@@ -56,14 +61,24 @@ float movementSamples[MOVEMENT_SAMPLES];
  //create object to hold accelerometer (for Sparkfun library)
 MMA8452Q myAccel;
 
+ //bluefruit configurations
+#include "BluefruitConfig.h"
  //create object to hold BLE module using software serial (to allow USB on hw UART)
 SoftwareSerial bluefruitSS = SoftwareSerial(BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN);
 Adafruit_BluefruitLE_UART ble(bluefruitSS, BLUEFRUIT_UART_MODE_PIN, BLUEFRUIT_UART_CTS_PIN, BLUEFRUIT_UART_RTS_PIN);
+ //constants for bare-bones 1-byte communication protocol
+const char REQUEST_ID = 'a';
+const char LED_STATE_ON = 'b';    
+const char LED_STATE_AUTO = 'c';
+const char LED_MODE_BLINK = 'd';
+const char LED_MODE_SOLID = 'e';
 
  //state machine data
-bool ConnectedState = false;
-bool LightLevelState = BRIGHT;
-bool MovingState  = false;
+bool Connected = false;
+bool BrightSurroundings = false;
+bool Moving  = false;
+bool LED_On = false;
+bool LED_Blinking = false;
 
 /***************************** SETUP CODE ********************************/
 void setup() {
@@ -79,8 +94,11 @@ void setup() {
   myAccel.init(SCALE_2G, ODR_800);
   
    //initialize pins for LEDs
-  pinMode(ACCEL_LED, OUTPUT);
-  pinMode(LIGHT_LED, OUTPUT);
+  pinMode(STATUS_LED, OUTPUT);
+  pinMode(MISC_LED, OUTPUT);
+  Timer1.initialize((long)BLINK_TIME_DELAY*1000);
+  Timer1.stop();
+  Timer1.attachInterrupt(LED_Blink);
 }
 
 
@@ -94,50 +112,122 @@ void loop() {
                              );
 
   /************ BLE Communication *******************/
-//  char n, inputs[BUFSIZE+1];
-//
-//  if (Serial.available())
-//  {
-//    n = Serial.readBytes(inputs, BUFSIZE);
-//    inputs[n] = 0;
-//    // Send characters to Bluefruit
-//    Serial.print("Sending: ");
-//    Serial.println(inputs);
-//
-//    // Send input data to host via Bluefruit
-//    ble.print(inputs);
-//  }
-//
-//  // Echo received data
-//  while ( ble.available() )
-//  {
-//    int c = ble.read();
-//
-//    Serial.print((char)c);
-//
-//    // Hex output too, helps w/debugging!
-//    Serial.print(" [0x");
-//    if (c <= 0xF) Serial.print(F("0"));
-//    Serial.print(c, HEX);
-//    Serial.print("] ");
-//  }
+   //if data is available
+  while ( ble.available() )
+  {
+     //get the received char
+    char c = ble.read();
+     //do a simple test on the char and respond accordingly... assume a state change is being made
+    switch(c){
+      case REQUEST_ID:
+        ble.print(DEVICE_ID);
+        break;
+        
+      case LED_STATE_ON:
+        LED_On = true;
+        stateChangeDetected |= true;
+        break;
+
+      case LED_STATE_AUTO:
+        LED_On = false;
+        stateChangeDetected |= true;
+        break;
+
+      case LED_MODE_BLINK:
+        LED_Blinking = true;
+        stateChangeDetected |= true;
+        break;
+
+      case LED_MODE_SOLID:
+        LED_Blinking = false;
+        stateChangeDetected |= true;
+        break;
+
+      default: break;
+    }
+  
+    #ifdef BLUEFRUIT_DEBUG
+      Serial.print((char)c);
+      Serial.print(" [0x");
+      if (c <= 0xF) Serial.print(F("0"));
+      Serial.print(c, HEX);
+      Serial.println("] ");
+    #endif
+  }
 
   /************ State Machine *******************/
-
+  if(stateChangeDetected){
+     //Case 1
+    if((Connected && LED_Blinking && (LED_On || !BrightSurroundings)) || (!Connected && Moving)){
+       //blink the LED
+      LED_Control(LED_BLINK);
+    }
+     //Case 2
+    else if(Connected && !LED_Blinking && (LED_On || !BrightSurroundings)){
+       //hold the LED solid
+      LED_Control(LED_SOLID);
+    }
+     //Case 3
+    else if((!Connected && !Moving) || (Connected && BrightSurroundings)){
+       //turn the LED off
+      LED_Control(LED_OFF);
+    }
+     //catch any potential other cases...
+    else{
+       //blink the LED
+      LED_Control(LED_BLINK);
+    }
+  }
   
   #ifdef STATE_DEBUG
     Serial.print("State changed? ");
     Serial.print(stateChangeDetected);
     Serial.print("\tConnected: ");
-    Serial.print(ConnectedState);
+    Serial.print(Connected);
+    Serial.print("\tLED_On: ");
+    Serial.print(LED_On);
+    Serial.print("\tLED_Blinking: ");
+    Serial.print(LED_Blinking);
     Serial.print("\tLight Level: ");
-    Serial.print(LightLevelState);
+    Serial.print(BrightSurroundings);
     Serial.print("\tMoving: ");
-    Serial.print(MovingState);
+    Serial.print(Moving);
     Serial.println("");
   #endif
+}
 
-  delay(50);
+/************ LED Control Functions ***************/
+void LED_Init(){
+  
+}
+
+void LED_Control(int behavior){
+  
+  switch(behavior){
+    case LED_OFF:
+      Timer1.stop();
+      digitalWrite(STATUS_LED, LOW);
+      break;
+      
+    case LED_SOLID:
+      Timer1.stop();
+      digitalWrite(STATUS_LED, HIGH);
+      break;
+      
+    case LED_BLINK:
+      Timer1.resume();
+      break;    
+
+    default:
+      Timer1.stop();
+      digitalWrite(STATUS_LED, LOW);
+      break;
+  }
+}
+
+void LED_Blink(){
+    // Toggle LED
+    digitalWrite( STATUS_LED, digitalRead( STATUS_LED ) ^ 1 );
 }
 
 /************ Bluefruit Functions ***************/
@@ -170,10 +260,10 @@ bool updateConnectionStatus(void){
    //check if bluefruit is connected
   bool newStatus = ble.isConnected();
    //check if connection state has changed
-  if(newStatus != ConnectedState){
+  if(newStatus != Connected){
     stateChangeDetected = true;
      //store new connected state and return
-    ConnectedState = newStatus;
+    Connected = newStatus;
   }
   return stateChangeDetected;
 }
@@ -208,10 +298,10 @@ bool updateLightLevel(int * storedReadings){
    //check if average light level is LIGHT or DARK
   bool newLL = (aveLL >= LIGHT_LEVEL_THRESHOLD);
    //check if light level state has changed
-  if(newLL != LightLevelState){
+  if(newLL != BrightSurroundings){
     stateChangeDetected = true;
      //store new light level and return
-    LightLevelState = newLL;
+    BrightSurroundings = newLL;
   }
   return stateChangeDetected;
 }
@@ -263,10 +353,10 @@ bool updateMovementReadings(int * storedReadings){
      //check if device is moving
     bool newMoveState = (shakeAve >= MOVEMENT_THRESHOLD);
      //check if moving state has changed
-    if(newMoveState != MovingState){
+    if(newMoveState != Moving){
       stateChangeDetected = true;
        //store new movement state
-      MovingState = newMoveState;
+      Moving = newMoveState;
     }
     
   } //end if (no new data on accelerometer)
