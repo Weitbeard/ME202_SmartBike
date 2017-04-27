@@ -22,7 +22,7 @@
 //#define LIGHT_DEBUG
 //#define ACCEL_DEBUG
 //#define BLUEFRUIT_DEBUG
-//#define STATE_DEBUG
+#define STATE_DEBUG
 
  //device configurations
 #define DEVICE_ID 1          //unique device ID for this SmartBike
@@ -104,12 +104,7 @@ void setup() {
 
 /***************************** MAIN LOOP ********************************/
 void loop() {  
-  /************* State Updates **********************/
-   //check if any states have changed by updating the sensor readings and connection status
-  bool stateChangeDetected = ( updateLightLevel(sensorReadings) || 
-                               updateMovementReadings(sensorReadings) ||
-                               updateConnectionStatus()
-                             );
+  bool stateChangeDetected = false;
 
   /************ BLE Communication *******************/
    //if data is available
@@ -125,22 +120,22 @@ void loop() {
         
       case LED_STATE_ON:
         LED_On = true;
-        stateChangeDetected |= true;
+        stateChangeDetected = true;
         break;
 
       case LED_STATE_AUTO:
         LED_On = false;
-        stateChangeDetected |= true;
+        stateChangeDetected = true;
         break;
 
       case LED_MODE_BLINK:
         LED_Blinking = true;
-        stateChangeDetected |= true;
+        stateChangeDetected = true;
         break;
 
       case LED_MODE_SOLID:
         LED_Blinking = false;
-        stateChangeDetected |= true;
+        stateChangeDetected = true;
         break;
 
       default: break;
@@ -154,6 +149,13 @@ void loop() {
       Serial.println("] ");
     #endif
   }
+
+  /************* State Updates **********************/
+   //check if any states have changed by updating the sensor readings and connection status
+  stateChangeDetected |= ( updateLightLevel(sensorReadings) || 
+                           updateMovementReadings(sensorReadings) ||
+                           updateConnectionStatus()
+                          );
 
   /************ State Machine *******************/
   if(stateChangeDetected){
@@ -197,10 +199,6 @@ void loop() {
 }
 
 /************ LED Control Functions ***************/
-void LED_Init(){
-  
-}
-
 void LED_Control(int behavior){
   
   switch(behavior){
@@ -260,8 +258,19 @@ bool updateConnectionStatus(void){
    //check if bluefruit is connected
   bool newStatus = ble.isConnected();
    //check if connection state has changed
+
   if(newStatus != Connected){
     stateChangeDetected = true;
+     //if device is disconnecting
+    if(newStatus == false){
+       //restore default settings
+      LED_On = false;
+      LED_Blinking = false;
+    }
+    else{
+      delay(1000);
+      ble.print(DEVICE_ID);
+    }
      //store new connected state and return
     Connected = newStatus;
   }

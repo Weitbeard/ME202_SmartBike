@@ -6,6 +6,8 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
@@ -13,6 +15,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.IntDef;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -25,12 +28,9 @@ public class BikeMonitorService extends Service {
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private String mBluetoothDeviceAddress;
-    private BluetoothGatt mBluetoothGatt;
-    private int mConnectionState = STATE_DISCONNECTED;
-
-    private static final int STATE_DISCONNECTED = 0;
-    private static final int STATE_CONNECTING = 1;
-    private static final int STATE_CONNECTED = 2;
+    public BluetoothGatt mBluetoothGatt;
+    public BluetoothGattCharacteristic tx;
+    public BluetoothGattCharacteristic rx;
 
     public final static String ACTION_GATT_CONNECTED =
             "ACTION_GATT_CONNECTED";
@@ -40,16 +40,21 @@ public class BikeMonitorService extends Service {
             "ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_DATA_AVAILABLE =
             "ACTION_DATA_AVAILABLE";
-    public final static String EXTRA_DATA =
-            "EXTRA_DATA";
+    public final static String ACTION_WRITING_DATA =
+            "ACTION_WRITING_DATA";
+    public final static String DEVICE_ID =
+            "DEVICE_ID";
 
-    public final static String INTENT_TEST = "abc";
+    public final static UUID UART_UUID =
+            UUID.fromString("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
+    public final static UUID RX_UUID =
+            UUID.fromString("6e400002-b5a3-f393-e0a9-e50e24dcca9e");
+    public final static UUID TX_UUID =
+            UUID.fromString("6e400003-b5a3-f393-e0a9-e50e24dcca9e");
+    public final static UUID CLIENT_UUID =
+            UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
-    public final static UUID UUID_HEART_RATE_MEASUREMENT =
-            UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
-
-    public BikeMonitorService() {
-    }
+    public BikeMonitorService() { }
 
     // TODO: 4/25/2017 handle GATT callbacks
     // Implements callback methods for GATT events that the app cares about.  For example,
@@ -57,19 +62,17 @@ public class BikeMonitorService extends Service {
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            super.onConnectionStateChange(gatt, status, newState);
             String intentAction;
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 intentAction = ACTION_GATT_CONNECTED;
-                mConnectionState = STATE_CONNECTED;
                 broadcastUpdate(intentAction);
                 Log.i(TAG, "Connected to GATT server.");
                 // Attempts to discover services after successful connection.
-                Log.i(TAG, "Attempting to start service discovery:" +
-                        mBluetoothGatt.discoverServices());
+                Log.i(TAG, "Attempting to start service discovery:" + mBluetoothGatt.discoverServices());
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 intentAction = ACTION_GATT_DISCONNECTED;
-                mConnectionState = STATE_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
                 broadcastUpdate(intentAction);
             }
@@ -77,7 +80,19 @@ public class BikeMonitorService extends Service {
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            super.onServicesDiscovered(gatt,status);
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                BluetoothGattService RxService = mBluetoothGatt.getService(UART_UUID);
+                if(RxService == null) {return;}
+                tx = RxService.getCharacteristic(TX_UUID);
+                if(tx == null) {return;}
+                rx = RxService.getCharacteristic(RX_UUID);
+                if(rx == null) {return;}
+                //mBluetoothGatt.setCharacteristicNotification(rx, true);
+                mBluetoothGatt.setCharacteristicNotification(tx, true);
+                BluetoothGattDescriptor desc = tx.getDescriptor(CLIENT_UUID);
+                desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                mBluetoothGatt.writeDescriptor(desc);
                 broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
@@ -86,13 +101,25 @@ public class BikeMonitorService extends Service {
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicRead(gatt, characteristic, status);
+            Log.d(TAG,"characteristicRead: "+characteristic);
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
         }
 
         @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicWrite(gatt, characteristic, status);
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                broadcastUpdate(ACTION_WRITING_DATA, characteristic);
+            }
+        }
+
+        @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            super.onCharacteristicChanged(gatt, characteristic);
+            Log.d(TAG,"characteristicChange: "+characteristic);
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
         }
     };
@@ -100,41 +127,23 @@ public class BikeMonitorService extends Service {
     /**************** Intent Broadcasting **************************/
     private void broadcastUpdate(final String action) {
         final Intent intent = new Intent(action);
-        sendBroadcast(intent);
+        Log.d(TAG,"sending intent for action: "+action);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     // TODO: 4/25/2017 handle parsing for explicit application
-    private void broadcastUpdate(final String action,
-                                 final BluetoothGattCharacteristic characteristic) {
+    private void broadcastUpdate(final String action, final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
-
-        // This is special handling for the Heart Rate Measurement profile.  Data parsing is
-        // carried out as per profile specifications:
-        // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
-        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
-            int flag = characteristic.getProperties();
-            int format = -1;
-            if ((flag & 0x01) != 0) {
-                format = BluetoothGattCharacteristic.FORMAT_UINT16;
-                Log.d(TAG, "Heart rate format UINT16.");
-            } else {
-                format = BluetoothGattCharacteristic.FORMAT_UINT8;
-                Log.d(TAG, "Heart rate format UINT8.");
-            }
-            final int heartRate = characteristic.getIntValue(format, 1);
-            Log.d(TAG, String.format("Received heart rate: %d", heartRate));
-            intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));
-        } else {
-            // For all other profiles, writes the data formatted in HEX.
-            final byte[] data = characteristic.getValue();
-            if (data != null && data.length > 0) {
-                final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for(byte byteChar : data)
-                    stringBuilder.append(String.format("%02X ", byteChar));
-                intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
+        if(ACTION_DATA_AVAILABLE.equals(action)) {
+            final byte[] receivedData = characteristic.getValue();
+            if (receivedData != null && receivedData.length > 0) {
+                 //assuming transmissions of a single byte from rx
+                String id = new String(receivedData);
+                Log.d(TAG, "device ID: "+ id);
+                intent.putExtra(DEVICE_ID, id);
             }
         }
-        sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     /**************** Service Binding **************************/
@@ -156,6 +165,7 @@ public class BikeMonitorService extends Service {
         // After using a given device, you should make sure that BluetoothGatt.close() is called
         // such that resources are cleaned up properly.  In this particular example, close() is
         // invoked when the UI is disconnected from the Service.
+        disconnect();
         close();
         Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
         return super.onUnbind(intent);
@@ -181,7 +191,6 @@ public class BikeMonitorService extends Service {
             Log.e(TAG, "Unable to obtain a BluetoothAdapter.");
             return false;
         }
-
         return true;
     }
 
@@ -197,7 +206,6 @@ public class BikeMonitorService extends Service {
                 && mBluetoothGatt != null) {
             Log.d(TAG, "Trying to use an existing mBluetoothGatt for connection.");
             if (mBluetoothGatt.connect()) {
-                mConnectionState = STATE_CONNECTING;
                 return true;
             } else {
                 return false;
@@ -214,25 +222,27 @@ public class BikeMonitorService extends Service {
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
-        mConnectionState = STATE_CONNECTING;
         return true;
     }
 
-    // TODO: 4/25/2017  
     public void disconnect() {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
         mBluetoothGatt.disconnect();
+        mBluetoothGatt = null;
+        tx = null;
+        rx = null;
     }
-    
-    // TODO: 4/25/2017
+
     public void close() {
         if (mBluetoothGatt == null) {
             return;
         }
         mBluetoothGatt.close();
         mBluetoothGatt = null;
+        tx = null;
+        rx = null;
     }
 }
