@@ -84,11 +84,17 @@ public class ControlActivity extends AppCompatActivity {
                  //show toast
                 Toast toast = Toast.makeText(getApplicationContext(), unlockToastText, Toast.LENGTH_SHORT);
                 toast.show();
+                 //enable light switches
+                lightModeSwitch.setEnabled(true);
+                lightStateSwitch.setEnabled(true);
             } else if (BikeMonitorService.ACTION_GATT_DISCONNECTED.equals(action)) {
                  //change the textviews to show device is disconnected
                 connStatusText.setText(getString(R.string.connStatus_text));
                 bikeIDText.setText(getString(R.string.bikeID_text));
                 connectedBikeID = "";
+                 //disable switches
+                lightModeSwitch.setEnabled(false);
+                lightStateSwitch.setEnabled(false);
             } else if (BikeMonitorService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 Log.d(TAG,"services discovered intent received");
                  //request the Device ID
@@ -153,11 +159,11 @@ public class ControlActivity extends AppCompatActivity {
          //user changes the Light Mode switch =>
         lightModeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton view, boolean isChecked) {
-                 //if the switch is enabled
+                 //if the switch is HIGH
                 if (isChecked) {
                     lightModeText.setText(getString(R.string.lightModeBlinking_text));
                     WriteStringBLE("d");
-                 //if the switch is disabled
+                 //if the switch is LOW
                 } else {
                     lightModeText.setText(getString(R.string.lightModeSolid_text));
                     WriteStringBLE("e");
@@ -168,11 +174,11 @@ public class ControlActivity extends AppCompatActivity {
          //user changes the Light State switch =>
         lightStateSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton view, boolean isChecked) {
-                 //if the switch is enabled
+                 //if the switch is HIGH
                 if (isChecked) {
                     lightStateText.setText(getString(R.string.lightStateOn_text));
                     WriteStringBLE("b");
-                 //if the switch is disabled
+                 //if the switch is LOW
                 } else {
                     lightStateText.setText(getString(R.string.lightStateAuto_text));
                     WriteStringBLE("c");

@@ -42,6 +42,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:textAlignment="center"
+            android:enabled="false"
             android:hint="@string/lightMode_text"/>
 
         <Switch
@@ -50,6 +51,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:textAlignment="center"
+            android:enabled="false"
             android:hint="@string/lightState_text"/>
 
     </LinearLayout>
