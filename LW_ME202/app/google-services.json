@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "969941444233",
+    "firebase_url": "https://me202-smartbike-lw.firebaseio.com",
+    "project_id": "me202-smartbike-lw",
+    "storage_bucket": "me202-smartbike-lw.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:969941444233:android:f3a39bf154a1e52a",
+        "android_client_info": {
+          "package_name": "edu.stanford.me202.lw_me202"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "969941444233-33hki9c7klaeke8amf7j6rnje2rlu480.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIvMi-nhlJLms9dNSFNUMO7EP_atP9DRY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

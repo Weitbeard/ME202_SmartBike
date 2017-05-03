@@ -18,7 +18,7 @@
             android:id="@+id/registerPWEntry"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:inputType="text"
+            android:inputType="textPassword"
             android:hint="@string/registerPWDefault_text" />
 
     <LinearLayout

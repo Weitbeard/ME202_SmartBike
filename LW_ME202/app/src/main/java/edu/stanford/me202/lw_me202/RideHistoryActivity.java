@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -13,10 +14,19 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -32,7 +42,8 @@ public class RideHistoryActivity extends AppCompatActivity {
     @BindView(R.id.rideHistoryEntry) EditText rideHistoryEntry;
     @BindView(R.id.rideHistoryUpdateButton) Button rideHistoryUpdateButton;
 
-    Realm realm;
+    private Realm realm;
+    private DatabaseReference rideDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,16 +78,31 @@ public class RideHistoryActivity extends AppCompatActivity {
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(itemTouchCallback);
         itemTouchHelper.attachToRecyclerView(rideHistoryRcyc);
 
-         //initialize realm for the activity
-        realm = Realm.getDefaultInstance();
-        //initTestData();
-
-         //pull in picture
+        //pull in default user picture
         Picasso.with(this)
-                 //grab the profile picture off linkedin
+                //grab the profile picture off linkedin
                 .load(getString(R.string.userPicture_URL))
                 .transform(new CircleConvert())
                 .into(rideHistoryBanner);
+
+         //initialize realm for the activity
+        realm = Realm.getDefaultInstance();
+         //get reference to Firebase database;
+        rideDB = FirebaseDatabase.getInstance().getReference();
+
+        //setup the database reference listeners
+        rideDB.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Log.d(TAG,"New Data: "+dataSnapshot);
+                Toast.makeText(RideHistoryActivity.this, "New Data: "+dataSnapshot, Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     @Override
@@ -100,11 +126,8 @@ public class RideHistoryActivity extends AppCompatActivity {
                     inputManager.hideSoftInputFromWindow(rideHistoryEntry.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
                      //get the current date
                     Calendar c = Calendar.getInstance();
-                    // TODO: 4/19/2017 adjust to use a dynamic method incorporating time zone
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
-                    String formattedDate = dateFormat.format(c.getTime());
                      //add new item to the list
-                    addToRideHistory(rideHistoryEntry.getText().toString(),formattedDate);
+                    addToRideHistory(rideHistoryEntry.getText().toString(),c.getTime());
                      //clear the text entry and remove focus
                     rideHistoryEntry.setText("");
                     rideHistoryEntry.clearFocus();
@@ -121,11 +144,11 @@ public class RideHistoryActivity extends AppCompatActivity {
         realm.close();
     }
 
-    private void addToRideHistory(String rideLocation, String rideDate){
+    private void addToRideHistory(String rideLocation, Date rideDate){
          //open a new transaction with the realm db
         realm.beginTransaction();
          //check to confirm it doesn't already exist
-        RealmResults<RideHistoryItem> rides = realm.where(RideHistoryItem.class).equalTo("rideLocation",rideLocation).findAll();
+        RealmResults<RideHistoryItem> rides = realm.where(RideHistoryItem.class).equalTo("rideDate",rideDate).findAll();
         if(rides.isEmpty()){
             //create object
             RideHistoryItem r = new RideHistoryItem(rideLocation, rideDate);
@@ -153,17 +176,4 @@ public class RideHistoryActivity extends AppCompatActivity {
          //remove object from the list
         rideHistoryRcyc.getAdapter().notifyDataSetChanged();
     }
-
-//     //For Testing Realm
-//    private void initTestData(){
-//         //if there is nothing in realm
-//        RealmResults<RideHistoryItem> rides = realm.where(RideHistoryItem.class).findAll();
-//        if(rides.isEmpty()){
-//             //add some dummy initial data
-//            addToRideHistory("Tulsa, OK", "01/04/1991");
-//            addToRideHistory("Omaha, NE", "05/21/2009");
-//            addToRideHistory("Stanford, CA", "06/23/2017");
-//        }
-//    }
-
 }

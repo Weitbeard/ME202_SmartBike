@@ -6,11 +6,18 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -22,16 +29,13 @@ public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "LoginActivity";
 
+    private FirebaseAuth bikeAuth;
+
      //linking views
     @BindView(R.id.loginNameEntry) EditText nameEntry;
     @BindView(R.id.loginPWEntry) EditText pwEntry;
     @BindView(R.id.loginButton) Button loginButton;
     @BindView(R.id.registerButton) Button registerButton;
-
-     //constants for dummy authentication
-    private final static String CORRECT_NAME = "lukeweit";
-    private final static String CORRECT_PW = "123abc";
-    private ArrayList<UserRecord> UserRecords = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,13 +44,17 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
          //bind views
         ButterKnife.bind(this);
-         //populate registered users with default user
-        UserRecords.add(new UserRecord(CORRECT_NAME,CORRECT_PW));
+         //get Firebase instance
+        bikeAuth = FirebaseAuth.getInstance();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+         //check if user is signed in already
+        FirebaseUser currentUser = bikeAuth.getCurrentUser();
+         //populate text fields with current user creds
+        updateUI(currentUser);
     }
 
     @Override
@@ -57,23 +65,10 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view){
-                String name = nameEntry.getText().toString();
+                 //attempt to login with entered credentials
+                String email = nameEntry.getText().toString();
                 String pw = pwEntry.getText().toString();
-
-                 //for each record in UserRecords
-                for(int i = 0; i<UserRecords.size(); i++) {
-                    //if the username and password are correct
-                    if (name.equals(UserRecords.get(i).getName()) && pw.equals(UserRecords.get(i).getPw())) {
-                        //change to control activity
-                        startActivity(new Intent(getApplicationContext(), ControlActivity.class));
-                        finish();
-                        return;
-                    }
-                }
-                 //if no user found put up a warning toast & clear the password contents
-                Toast toast = Toast.makeText(getApplicationContext(), R.string.incorrectWarning_text, Toast.LENGTH_SHORT);
-                toast.show();
-                pwEntry.setText("");
+                logInUser(email, pw);
             }
         });
 
@@ -118,20 +113,19 @@ public class LoginActivity extends AppCompatActivity {
                     String newPW = registerPWEntry.getText().toString();
                     //if a valid ID has been entered
                     if(!newName.equals("") && !newPW.equals("")){
-                        //start BLE service to connect with monitor
-                        UserRecords.add(new UserRecord(registerNameEntry.getText().toString(), registerPWEntry.getText().toString()));
-                        //populate toast with registration affirmation
-                        registerToastText = getString(R.string.registerGoodToast_text);
+                        //start registration for the user
+                        registerUser(newName,newPW);
+                        //dismiss the dialog
                         dismiss();
                     }
                     //if an invalid ID
                     else{
                         //populate toast with warning
                         registerToastText = getString(R.string.registerBadToast_text);
+                        //show toast
+                        Toast toast = Toast.makeText(getApplicationContext(), registerToastText, Toast.LENGTH_SHORT);
+                        toast.show();
                     }
-                    //show toast
-                    Toast toast = Toast.makeText(getApplicationContext(), registerToastText, Toast.LENGTH_SHORT);
-                    toast.show();
                 }
             });
 
@@ -146,29 +140,62 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    public class UserRecord{
-        private String name;
-        private String pw;
+     //register the user via Firebase
+    private void registerUser(String email, String pw){
+        bikeAuth.createUserWithEmailAndPassword(email, pw)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "createUserWithEmail:success");
+                            Toast.makeText(LoginActivity.this, "Successfully registered!",
+                                    Toast.LENGTH_SHORT).show();
+                            FirebaseUser user = bikeAuth.getCurrentUser();
+                            updateUI(user);
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w(TAG, "createUserWithEmail:failure", task.getException());
+                            Toast.makeText(LoginActivity.this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                            updateUI(null);
+                        }
+                    }
+                });
+    }
 
-        public UserRecord(String name, String pw) {
-            this.name = name;
-            this.pw = pw;
-        }
+     //log in the user via Firebase
+    private void logInUser(String email, String pw){
+        bikeAuth.signInWithEmailAndPassword(email, pw)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        //if login was successful
+                        if(task.isSuccessful()){
+                            //update UI for the user
+                            FirebaseUser user = bikeAuth.getCurrentUser();
+                            updateUI(user);
+                            //change to control activity
+                            startActivity(new Intent(getApplicationContext(), ControlActivity.class));
+                            finish();
+                        }
+                        //if login failed
+                        else{
+                            //show a warning toast and clear the password entry
+                            Toast toast = Toast.makeText(getApplicationContext(), R.string.incorrectWarning_text, Toast.LENGTH_SHORT);
+                            toast.show();
+                            pwEntry.setText("");
+                        }
+                    }
+                });
+    }
 
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getPw() {
-            return pw;
-        }
-
-        public void setPw(String pw) {
-            this.pw = pw;
+     //update the application UI for the current user
+    private void updateUI(FirebaseUser user) {
+         //for now, just enter the email into the text entry & clear the pw entry
+        if (user != null) {
+            nameEntry.setText(user.getEmail());
+            pwEntry.setText("");
         }
     }
 }

@@ -45,7 +45,7 @@
     <string name="rideRowIcon_text">Ride trip icon</string>
     <string name="rideHistoryEntry_text">Enter new ride label</string>
     <string name="rideHistoryUpdate_text">Add Ride</string>
-    <string name="badItemEntryToast_text">Enter a unique ride label</string>
+    <string name="badItemEntryToast_text">Unable to add ride</string>
     <string name="itemDeletedToast_text">Ride Deleted from History</string>
 
 </resources>
