@@ -22,7 +22,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".ControlActivity" />
-        <activity android:name=".RideHistoryActivity" />
+        <activity android:name=".RideHistoryActivity"/>
 
         <service
             android:name=".BikeMonitorService"
