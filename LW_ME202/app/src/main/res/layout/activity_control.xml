@@ -25,11 +25,11 @@
         android:text="@string/connStatus_text" />
 
     <TextView
-        android:id="@+id/bikeIDText"
+        android:id="@+id/bikeMovementText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAlignment="center"
-        android:text="@string/bikeID_text" />
+        android:text="@string/bikeMovement_default" />
 
     <LinearLayout
         android:orientation="horizontal"

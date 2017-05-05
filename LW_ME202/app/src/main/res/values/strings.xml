@@ -22,7 +22,9 @@
     <string name="unlockButton_text">Unlock Bike</string>
     <string name="connStatus_text">No Connection</string>
     <string name="bikeConnected_text">Bike Connected:</string>
-    <string name="bikeID_text">...</string>
+    <string name="bikeMovement_default">...</string>
+    <string name="bikeMovement_moving">Bike Moving!</string>
+    <string name="bikeMovement_stationary">Bike Stationary!</string>
     <string name="lightMode_text">Light Mode</string>
     <string name="lightState_text">Light State</string>
     <string name="lightModeBlinking_text">Blinking</string>

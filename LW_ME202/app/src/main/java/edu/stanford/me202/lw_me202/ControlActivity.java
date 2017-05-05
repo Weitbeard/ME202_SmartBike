@@ -39,12 +39,12 @@ public class ControlActivity extends AppCompatActivity {
     private static final String TAG = "ControlActivity";
     private BikeMonitorService mBMService;
     private String bikeAddress;
-    private String connectedBikeID;
+    private String bikeMovement;
 
     //linking views
     @BindView(R.id.unlockButton) Button unlockButton;
     @BindView(R.id.connStatusText) TextView connStatusText;
-    @BindView(R.id.bikeIDText) TextView bikeIDText;
+    @BindView(R.id.bikeMovementText) TextView bikeMovementText;
     @BindView(R.id.lightModeSwitch) Switch lightModeSwitch;
     @BindView(R.id.lightStateSwitch) Switch lightStateSwitch;
     @BindView(R.id.lightModeText) TextView lightModeText;
@@ -78,7 +78,7 @@ public class ControlActivity extends AppCompatActivity {
              //based on the intent's contents:
             if (BikeMonitorService.ACTION_GATT_CONNECTED.equals(action)) {
                  //change the textview to show device is connected
-                connStatusText.setText(getString(R.string.bikeConnected_text));
+                connStatusText.setText(getString(R.string.bikeConnected_text)+" "+bikeAddress);
                  //populate toast with selected ID number & dismiss dialog
                 String unlockToastText = getString(R.string.unlockGoodToast_text) + bikeAddress;
                  //show toast
@@ -90,20 +90,23 @@ public class ControlActivity extends AppCompatActivity {
             } else if (BikeMonitorService.ACTION_GATT_DISCONNECTED.equals(action)) {
                  //change the textviews to show device is disconnected
                 connStatusText.setText(getString(R.string.connStatus_text));
-                bikeIDText.setText(getString(R.string.bikeID_text));
-                connectedBikeID = "";
+                bikeMovementText.setText(getString(R.string.bikeMovement_default));
+                bikeMovement = "";
                  //disable switches
                 lightModeSwitch.setEnabled(false);
                 lightStateSwitch.setEnabled(false);
             } else if (BikeMonitorService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 Log.d(TAG,"services discovered intent received");
-                 //request the Device ID
-                WriteStringBLE("a");
             } else if (BikeMonitorService.ACTION_DATA_AVAILABLE.equals(action)) {
                  //display the Device ID
-                Log.d(TAG,"data available: " + intent.getStringExtra(BikeMonitorService.DEVICE_ID));
-                connectedBikeID = intent.getStringExtra(BikeMonitorService.DEVICE_ID);
-                bikeIDText.setText(connectedBikeID);
+                Log.d(TAG,"data available: " + intent.getStringExtra(BikeMonitorService.BIKE_MOVEMENT));
+                bikeMovement = intent.getStringExtra(BikeMonitorService.BIKE_MOVEMENT);
+                if(bikeMovement.equals("0")){
+                    bikeMovementText.setText(getString(R.string.bikeMovement_stationary));
+                }
+                else{
+                    bikeMovementText.setText(getString(R.string.bikeMovement_moving));
+                }
             }
         }
     };

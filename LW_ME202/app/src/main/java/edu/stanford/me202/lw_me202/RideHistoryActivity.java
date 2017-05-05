@@ -111,6 +111,15 @@ public class RideHistoryActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onSaveInstanceState(Bundle savedInstanceState){
+        super.onSaveInstanceState(savedInstanceState);
+
+        //save sync status to saved state
+        savedInstanceState.putBoolean(SYNC_STATE,this.synced);
+        Log.d(TAG,"Saved instance state; synced: "+this.synced);
+    }
+
+    @Override
     public void onRestoreInstanceState(Bundle savedInstanceState){
         super.onRestoreInstanceState(savedInstanceState);
 

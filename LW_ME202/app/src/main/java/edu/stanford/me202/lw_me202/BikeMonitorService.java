@@ -43,8 +43,8 @@ public class BikeMonitorService extends Service {
             "ACTION_DATA_AVAILABLE";
     public final static String ACTION_WRITING_DATA =
             "ACTION_WRITING_DATA";
-    public final static String DEVICE_ID =
-            "DEVICE_ID";
+    public final static String BIKE_MOVEMENT =
+            "BIKE_MOVEMENT";
 
      //UUID defines
     public final static UUID UART_UUID =
@@ -156,9 +156,9 @@ public class BikeMonitorService extends Service {
             final byte[] receivedData = characteristic.getValue();
             if (receivedData != null && receivedData.length > 0) {
                  //assuming transmissions of a single byte from rx containing the requested Device ID
-                String id = new String(receivedData);
-                Log.d(TAG, "device ID: "+ id);
-                intent.putExtra(DEVICE_ID, id);
+                String moving = new String(receivedData);
+                Log.d(TAG, "movement state: "+ moving);
+                intent.putExtra(BIKE_MOVEMENT, moving);
             }
         }
          //broadcast the modified intent
