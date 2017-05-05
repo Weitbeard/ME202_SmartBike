@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
+import java.text.DateFormat;
 import java.util.ArrayList;
 
 import butterknife.BindView;
@@ -86,7 +87,7 @@ public class RideHistoryRcycAdapter extends RecyclerView.Adapter<RideHistoryRcyc
                 .load(icons[iconType])
                 .into(holder.rideIcon);
         holder.rideLocationText.setText(rh.getRideLocation());
-        holder.rideDateText.setText(rh.getRideDate());
+        holder.rideDateText.setText(DateFormat.getDateInstance(DateFormat.MEDIUM).format(rh.getRideDate()));
     }
 
      //return the size of the dataset (invoked by the layout manager)

@@ -22,22 +22,20 @@
 //#define LIGHT_DEBUG
 //#define ACCEL_DEBUG
 //#define BLUEFRUIT_DEBUG
-#define STATE_DEBUG
-
- //device configurations
-#define DEVICE_ID 1          //unique device ID for this SmartBike
+//#define STATE_DEBUG
 
  //embedded device pin connections
 #define LIGHT_SENSOR A3
 #define STATUS_LED 5
-#define MISC_LED 2
+#define MISC_LED 6
 
  //LED configurations
 #define LED_OFF           0
 #define LED_SOLID         1
 #define LED_BLINK         2
-#define LED_FAST_BLINK    3
-#define BLINK_TIME_DELAY  500  //blink rate for status LED in ms
+#define BLINK_TIME_COUNT  5  //blink rate for status LED x100ms
+int BlinkCount = 0;          //counter for use in Timer 1 ISR
+boolean Blinking = false;    //if LED is currently blinking
 
  //sensor reading array defines
 #define NUM_SENSORS 2              //number of sensor readings to track
@@ -67,7 +65,6 @@ MMA8452Q myAccel;
 SoftwareSerial bluefruitSS = SoftwareSerial(BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN);
 Adafruit_BluefruitLE_UART ble(bluefruitSS, BLUEFRUIT_UART_MODE_PIN, BLUEFRUIT_UART_CTS_PIN, BLUEFRUIT_UART_RTS_PIN);
  //constants for bare-bones 1-byte communication protocol
-const char REQUEST_ID = 'a';
 const char LED_STATE_ON = 'b';    
 const char LED_STATE_AUTO = 'c';
 const char LED_MODE_BLINK = 'd';
@@ -79,6 +76,11 @@ bool BrightSurroundings = false;
 bool Moving  = false;
 bool LED_On = false;
 bool LED_Blinking = false;
+
+ //timer 1 data
+#define HUNDRED_MS 100
+int AccelCount = 0;               //counter for use in Timer 1 ISR
+const int ACCEL_PRINT_COUNT = 10; //reporting rate for accelerometer x100ms
 
 /***************************** SETUP CODE ********************************/
 void setup() {
@@ -96,11 +98,9 @@ void setup() {
    //initialize pins for LEDs
   pinMode(STATUS_LED, OUTPUT);
   pinMode(MISC_LED, OUTPUT);
-  Timer1.initialize((long)BLINK_TIME_DELAY*1000);
-  Timer1.stop();
-  Timer1.attachInterrupt(LED_Blink);
+  Timer1.initialize((long)HUNDRED_MS*1000);
+  Timer1.attachInterrupt(timer1ISR);
 }
-
 
 /***************************** MAIN LOOP ********************************/
 void loop() {  
@@ -114,10 +114,6 @@ void loop() {
     char c = ble.read();
      //do a simple test on the char and respond accordingly... assume a state change is being made
     switch(c){
-      case REQUEST_ID:
-        ble.print(DEVICE_ID);
-        break;
-        
       case LED_STATE_ON:
         LED_On = true;
         stateChangeDetected = true;
@@ -196,36 +192,54 @@ void loop() {
     Serial.print(Moving);
     Serial.println("");
   #endif
+
+  delay(100);
 }
+
+/************ Timer1 ISR ************************/
+void timer1ISR(void){
+   //software counter for reporting accelerometer values
+  if(Connected){
+    AccelCount = (AccelCount + 1)%ACCEL_PRINT_COUNT;
+    if(AccelCount == 0){
+      ble.print(Moving);
+    }
+  }
+
+   //software counter for blinking the LED
+  if(Blinking){
+    BlinkCount = (BlinkCount + 1)%BLINK_TIME_COUNT;
+    if(BlinkCount == 0){
+       //toggle the LED
+      digitalWrite( STATUS_LED, digitalRead( STATUS_LED ) ^ 1 );
+    }
+  }
+}
+
 
 /************ LED Control Functions ***************/
 void LED_Control(int behavior){
   
   switch(behavior){
     case LED_OFF:
-      Timer1.stop();
+      Blinking = false;
       digitalWrite(STATUS_LED, LOW);
       break;
       
     case LED_SOLID:
-      Timer1.stop();
+      Blinking = false;
       digitalWrite(STATUS_LED, HIGH);
       break;
       
     case LED_BLINK:
-      Timer1.resume();
+      Blinking = true;
       break;    
 
     default:
-      Timer1.stop();
+      Blinking = false;
       digitalWrite(STATUS_LED, LOW);
       break;
   }
-}
-
-void LED_Blink(){
-    // Toggle LED
-    digitalWrite( STATUS_LED, digitalRead( STATUS_LED ) ^ 1 );
 }
 
 /************ Bluefruit Functions ***************/
@@ -258,7 +272,6 @@ bool updateConnectionStatus(void){
    //check if bluefruit is connected
   bool newStatus = ble.isConnected();
    //check if connection state has changed
-
   if(newStatus != Connected){
     stateChangeDetected = true;
      //if device is disconnecting
@@ -266,10 +279,6 @@ bool updateConnectionStatus(void){
        //restore default settings
       LED_On = false;
       LED_Blinking = false;
-    }
-    else{
-      delay(1000);
-      ble.print(DEVICE_ID);
     }
      //store new connected state and return
     Connected = newStatus;

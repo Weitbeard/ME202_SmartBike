@@ -1,5 +1,11 @@
 package edu.stanford.me202.lw_me202;
 
+import android.support.annotation.Nullable;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Random;
 
 import io.realm.RealmObject;
@@ -12,22 +18,37 @@ import io.realm.annotations.Required;
 
 public class RideHistoryItem extends RealmObject {
 
-    // TODO: 4/18/2017 replace the primary key with a unique pseudo-random key, rather than using the ride location/label
     @PrimaryKey
     @Required
-    private String rideLocation;
+    private String key;
     @Required
-    private String rideDate;
+    private Date rideDate;
+    @Required
+    private String rideLocation;
     private int rideIconType;
+    @Required
+    private String FbKey;
 
      //need an empty constructor for realm
     public RideHistoryItem() {}
 
-    public RideHistoryItem(String rideLocation, String rideDate) {
+    public RideHistoryItem(String rideLocation, Date rideDate) {
+         //store new data
+        this.key = rideLocation + ": " + rideDate.toString();
         this.rideLocation = rideLocation;
         this.rideDate = rideDate;
          //assign a random icon type
         this.rideIconType = Math.abs( new Random().nextInt() );
+         //assign an empty FbKey
+        this.FbKey = "";
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public String getRideLocation() {
@@ -38,11 +59,11 @@ public class RideHistoryItem extends RealmObject {
         this.rideLocation = rideLocation;
     }
 
-    public String getRideDate() {
+    public Date getRideDate() {
         return rideDate;
     }
 
-    public void setRideDate(String rideDate) {
+    public void setRideDate(Date rideDate) {
         this.rideDate = rideDate;
     }
 
@@ -52,5 +73,13 @@ public class RideHistoryItem extends RealmObject {
 
     public void setRideIconType(int rideIconType) {
         this.rideIconType = rideIconType;
+    }
+
+    public String getFbKey() {
+        return FbKey;
+    }
+
+    public void setFbKey(String fbKey) {
+        FbKey = fbKey;
     }
 }
