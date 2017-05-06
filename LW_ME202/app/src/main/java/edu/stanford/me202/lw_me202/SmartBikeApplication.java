@@ -27,11 +27,5 @@ public class SmartBikeApplication extends Application {
                 .deleteRealmIfMigrationNeeded()
                 .build();
         Realm.setDefaultConfiguration(realmConfig);
-
-         //Killing all realm data up-front to test Firebase sync
-        Realm realm = Realm.getDefaultInstance();
-        realm.beginTransaction();
-        realm.deleteAll();
-        realm.commitTransaction();
     }
 }

@@ -1,7 +1,6 @@
 package edu.stanford.me202.lw_me202;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -18,7 +17,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -45,11 +44,9 @@ public class RideHistoryActivity extends AppCompatActivity {
     private Realm realm;
     private FirebaseDatabase bikeDB;
     private DatabaseReference rideRef;
-
-
-    private SharedPreferences mPrefs;
+    private String userName;
     static final String SYNC_STATE = "SYNC_STATE";
-    private boolean synced;
+//    private SharedPreferences settings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,41 +88,6 @@ public class RideHistoryActivity extends AppCompatActivity {
                 .load(getString(R.string.userPicture_URL))
                 .transform(new CircleConvert())
                 .into(rideHistoryBanner);
-
-         //initialize realm for the activity
-        realm = Realm.getDefaultInstance();
-         //get reference to Firebase database;
-        bikeDB = FirebaseDatabase.getInstance();
-        rideRef = bikeDB.getReference();
-
-        if(bikeDB != null) {
-            //do initial sync of data from Firebase
-            if (!synced) {
-                syncWithFirebase();
-                synced = true;
-            }
-
-            //setup the database reference listeners
-            // TODO: 5/3/2017 setup listeners to respond to changes from database side (not needed for the lab)
-        }
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle savedInstanceState){
-        super.onSaveInstanceState(savedInstanceState);
-
-        //save sync status to saved state
-        savedInstanceState.putBoolean(SYNC_STATE,this.synced);
-        Log.d(TAG,"Saved instance state; synced: "+this.synced);
-    }
-
-    @Override
-    public void onRestoreInstanceState(Bundle savedInstanceState){
-        super.onRestoreInstanceState(savedInstanceState);
-
-        //restore sync status from saved state
-        this.synced = savedInstanceState.getBoolean(SYNC_STATE);
-        Log.d(TAG,"Restored instance state; synced: "+this.synced);
     }
 
     @Override
@@ -134,6 +96,27 @@ public class RideHistoryActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        //initialize realm for the activity
+        realm = Realm.getDefaultInstance();
+        //get the current username
+        userName = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        //get reference to Firebase database;
+        bikeDB = FirebaseDatabase.getInstance();
+        rideRef = bikeDB.getReference().child("users").child(userName).child("rides");
+
+        //for initial creation, sync data from Firebase
+        boolean synced = getIntent().getBooleanExtra(SYNC_STATE,true);
+        if(bikeDB != null) {
+            //do initial sync of data from Firebase
+            if (!synced) {
+                syncWithFirebase();
+            }
+
+            //setup the database reference listeners
+            // TODO: 5/3/2017 setup listeners to respond to changes from database side (not needed for the lab)
+        }
+
 
         rideHistoryUpdateButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -163,12 +146,19 @@ public class RideHistoryActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
          //dumb work around for to maintain a persistence for the sync state...
-        finish();
+        Log.d(TAG,"pausing activity");
+    }
+
+    @Override
+    protected void onStop(){
+        super.onStop();
+        Log.d(TAG,"stopping activity");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.d(TAG,"destroying activity");
          //close realm instance
         realm.close();
     }
@@ -212,8 +202,8 @@ public class RideHistoryActivity extends AppCompatActivity {
             realm.copyToRealm(ride);
         }
         else{
-//            Toast toast = Toast.makeText(getApplicationContext(),R.string.badItemEntryToast_text, Toast.LENGTH_SHORT);
-//            toast.show();
+            Toast toast = Toast.makeText(getApplicationContext(),R.string.badItemEntryToast_text, Toast.LENGTH_SHORT);
+            toast.show();
         }
         //close the transaction with the realm db
         realm.commitTransaction();
@@ -223,11 +213,11 @@ public class RideHistoryActivity extends AppCompatActivity {
 
     private void writeToFirebase(RideHistoryItem ride){
          //get a key from Firebase for the new ride
-        String newKey = rideRef.child("rides").push().getKey();
+        String newKey = rideRef.push().getKey();
          //store the key locally
         ride.setFbKey(newKey);
          //add the new ride to firebase using the key
-        rideRef.child("rides").child(newKey).setValue(ride).addOnCompleteListener(
+        rideRef.child(newKey).setValue(ride).addOnCompleteListener(
                 new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
@@ -245,18 +235,15 @@ public class RideHistoryActivity extends AppCompatActivity {
     }
 
     private void removeFromFirebase(RideHistoryItem ride){
-        //Query queryRef = rideRef.child("rides").equalTo(ride.getFbKey()).limitToFirst(1);
-        Log.d(TAG,"trying to delete: "+rideRef.child("rides").child(ride.getFbKey()).toString());
-        rideRef.child("rides").child(ride.getFbKey()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+        Log.d(TAG,"trying to delete: "+rideRef.child(ride.getFbKey()).toString());
+        rideRef.child(ride.getFbKey()).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 if(task.isSuccessful()){
-                    Toast toast = Toast.makeText(getApplicationContext(),"Successful Firebase Deletion", Toast.LENGTH_SHORT);
-                    toast.show();
+                    Log.d(TAG,"Successful Firebase Deletion");
                 }
                 else{
-                    Toast toast = Toast.makeText(getApplicationContext(),"Firebase delete error", Toast.LENGTH_SHORT);
-                    toast.show();
+                    Log.d(TAG,"Firebase delete error");
                 }
             }
         });
@@ -264,7 +251,13 @@ public class RideHistoryActivity extends AppCompatActivity {
 
     private void syncWithFirebase(){
         Log.d(TAG,"Trying to sync");
-        DatabaseReference syncRef =  bikeDB.getReference().child("rides");
+
+        //Killing all realm data up-front to test Firebase sync
+        realm.beginTransaction();
+        realm.deleteAll();
+        realm.commitTransaction();
+
+        DatabaseReference syncRef =  rideRef;
         syncRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

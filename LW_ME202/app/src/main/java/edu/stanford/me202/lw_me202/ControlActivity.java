@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
@@ -39,7 +40,7 @@ public class ControlActivity extends AppCompatActivity {
     private static final String TAG = "ControlActivity";
     private BikeMonitorService mBMService;
     private String bikeAddress;
-    private String bikeMovement;
+    private static boolean synced = false;
 
     //linking views
     @BindView(R.id.unlockButton) Button unlockButton;
@@ -91,7 +92,6 @@ public class ControlActivity extends AppCompatActivity {
                  //change the textviews to show device is disconnected
                 connStatusText.setText(getString(R.string.connStatus_text));
                 bikeMovementText.setText(getString(R.string.bikeMovement_default));
-                bikeMovement = "";
                  //disable switches
                 lightModeSwitch.setEnabled(false);
                 lightStateSwitch.setEnabled(false);
@@ -100,7 +100,7 @@ public class ControlActivity extends AppCompatActivity {
             } else if (BikeMonitorService.ACTION_DATA_AVAILABLE.equals(action)) {
                  //display the Device ID
                 Log.d(TAG,"data available: " + intent.getStringExtra(BikeMonitorService.BIKE_MOVEMENT));
-                bikeMovement = intent.getStringExtra(BikeMonitorService.BIKE_MOVEMENT);
+                String bikeMovement = intent.getStringExtra(BikeMonitorService.BIKE_MOVEMENT);
                 if(bikeMovement.equals("0")){
                     bikeMovementText.setText(getString(R.string.bikeMovement_stationary));
                 }
@@ -117,6 +117,8 @@ public class ControlActivity extends AppCompatActivity {
         setContentView(R.layout.activity_control);
          //bind views
         ButterKnife.bind(this);
+         //clear synced status
+        synced = false;
     }
 
     @Override
@@ -140,8 +142,11 @@ public class ControlActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mGattUpdateReceiver);
-        unbindService(mBMConnection);
-        mBMService = null;
+        if(mBMService != null) {
+            unbindService(mBMConnection);
+            mBMService = null;
+        }
+        Log.d(TAG,"destroying activity (control)");
     }
 
     @Override
@@ -194,7 +199,12 @@ public class ControlActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 //change to ride history activity
-                startActivity(new Intent(getApplicationContext(), RideHistoryActivity.class));
+                Intent i = new Intent(getApplicationContext(), RideHistoryActivity.class);
+                //include the sync state
+                Log.d(TAG,"sending sync state: "+synced);
+                i.putExtra(RideHistoryActivity.SYNC_STATE, synced);
+                startActivity(i);
+                synced = true;
             }
         });
     }

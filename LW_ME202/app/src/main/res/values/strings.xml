@@ -2,8 +2,8 @@
     <string name="app_name">LW_ME202</string>
     <string name="BMService_desc">BLE interface with SmartBike</string>
 
-    <string name="loginNameLabel_text">Username: </string>
-    <string name="loginNameDefault_text">Enter Username Here</string>
+    <string name="loginNameLabel_text">User Email: </string>
+    <string name="loginNameDefault_text">Enter Email Here</string>
     <string name="loginPWLabel_text">Password: </string>
     <string name="loginPWDefault_text">Enter Login Password Here</string>
     <string name="loginButton_text">Submit</string>
@@ -11,11 +11,11 @@
     <string name="loginIncorrectLabel_text"> </string>
     <string name="incorrectWarning_text">Incorrect Login</string>
 
-    <string name="registerNameDefault_text">Enter New Username</string>
+    <string name="registerNameDefault_text">Enter New Email</string>
     <string name="registerPWDefault_text">Enter New Password</string>
     <string name="registerDialogTitle_text">User Registration</string>
     <string name="registerGoodToast_text">User successfully registered</string>
-    <string name="registerBadToast_text">Please enter a Username and Password</string>
+    <string name="registerBadToast_text">Please enter an Email and Password</string>
     <string name="registerEnter_text">Register</string>
     <string name="registerCancel_text">Cancel</string>
 
